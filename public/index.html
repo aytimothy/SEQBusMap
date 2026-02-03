@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>SEQ Bus Map</title>
+        <link rel="stylesheet" href="/stylesheets/style.css">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+        <!-- <link rel="stylesheet" href="/stylesheets/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="> -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+        <!-- <script src="/javascripts/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="></script> -->
+        <style>
+            #map {
+                width: calc(100vw - 200px);
+                height: calc(100vh - 250px);
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Southeast Queensland Public Transport Map</h1>
+        <div id="map"></div>
+        <script>
+            (async () => {
+                // Center map on Brisbane CBD.
+                const map = L.map('map').setView([-27.471018236059493, 153.0260892175199], 13);
+                const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }).addTo(map);
+                // Draw all route lines
+                const routesRequest = new Request(`/data/routes`, { method: 'GET' });
+                const routesResponse = await fetch(routesRequest);
+                const routesRaw = await routesResponse.json();
+                var routeDataRequest = undefined;
+                var routeDataResponse = undefined
+                var routeData = undefined;
+                var routesDict = {};
+                var routeLayers = {};
+                const nonsenseRoutes = ['BDBN', 'BDBR', 'BRBD', 'BRBR', 'BNBD', 'BNBN', 'BNBR', 'BRBN', 'CABR', 'CAIP', 'CARW', 'CASP', 'VLDB', 'VLBR', 'VLBN']
+                for (const route of routesRaw) {
+                    let routeShortName = route.route_short_name;
+                    if (routesDict.hasOwnProperty(routeShortName)) { continue; }
+                    if (nonsenseRoutes.includes(routeShortName)) { continue; }
+                    if (routeShortName.startsWith('R')) { continue; } // no rail buses
+                    routesDict[routeShortName] = route;
+                }
+                const routes = L.layerGroup();
+                const routesArray = Object.keys(routesDict).map(key => routesDict[key]);
+                for (const route of routesArray) {
+                    try {
+                        routeDataRequest = new Request(`/datasets/SEQ_GTFS/geojson/translink/${route.route_id}_0.geojson`, { method: 'GET' });
+                        routeDataResponse = await fetch(routeDataRequest);
+                        routeData = await routeDataResponse.json();
+                    }
+                    catch (err) {
+                        try {
+                            routeDataRequest = new Request(`/datasets/SEQ_GTFS/geojson/translink/${route.route_id}_1.geojson`, { method: 'GET' });
+                            routeDataResponse = await fetch(routeDataRequest);
+                            routeData = await routeDataResponse.json();
+                        }
+                        catch (err) {
+                            console.error(`Could not fetch route data for ${route.route_id}: ${err}`);
+                            continue;
+                        }
+                    }
+                    routeData.features = routeData.features.filter(feature => feature.geometry.type !== "Point");
+                    routeLayers[route.route_short_name] = L.geoJSON(routeData, {
+                        style: function (feature) {
+                            return {
+                                color: `#${route.route_color}`,
+                                weight: 3
+                            };
+                        }
+                    }).bindPopup(`<b><span style="background-color: #${route.route_color}; color: #${route.route_text_color}">Route ${route.route_short_name}</span></b><br>${route.route_long_name}`)
+                        .addTo(routes);
+                }
+                // Draw all stops
+                const stopsRequest = new Request(`/data/stops`, { method: 'GET' });
+                const stopsResponse = await fetch(stopsRequest);
+                const stopsRaw = await stopsResponse.json();
+                const stops = L.layerGroup();
+                var stopLayers = {};
+                for (const stop of stopsRaw) {
+                    stopLayers[stop.stop_id] = L.marker([stop.stop_lat, stop.stop_lon])
+                        .bindPopup(`<b>Stop ID:</b> ${stop.stop_id} (<a href="${stop.stop_url}">${stop.stop_code}</a>)<br>${stop.stop_name}</b>`)
+                        .addTo(stops);
+                }
+                // Assign them to layer groups
+                const overlayMaps = {
+                    "Routes": routes,
+                    "Stops": stops
+                };
+                L.control.layers(null, overlayMaps).addTo(map);
+                routes.show();
+            })();
+        </script>
+        <p>Made by <a href="https://twitter.com/aytimothy">aytimothy</a></p>
+        <div style="height: 100px; display: block;"><!-- Padding --></div>
+        <h1>Data Sources</h1>
+        <p>
+            This uses the following data sources:
+        </p>
+        <ul>
+            <li><a href="https://www.data.qld.gov.au/dataset/general-transit-feed-specification-gtfs-translink/resource/e43b6b9f-fc2b-4630-a7c9-86dd5483552b">South East Queensland (SEQ) - general transit feed specification</a> <a href="https://gtfsrt.api.translink.com.au/GTFS/SEQ_GTFS.zip">(Direct)</a> <a href="https://gtfs.org/documentation/schedule/reference/">(Specs)</a></li>
+            <li><a href="https://openstreetmap.org">OpenStreetMap</a></li>
+        </ul>
+    </body>
+</html>

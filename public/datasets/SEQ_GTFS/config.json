@@ -1,0 +1,12 @@
+{
+  "agencies": [
+    {
+      "agencyKey": "translink",
+      "url": "https://gtfsrt.api.translink.com.au/GTFS/SEQ_GTFS.zip",
+      "path": "./public/datasets/SEQ_GTFS/translink_GTFS.zip"
+    }
+  ],
+  "outputType": "agency",
+  "outputFormat": "lines-and-stops",
+  "sqlitePath": "./public/datasets/SEQ_GTFS/SEQ_GTFS.sqlite"
+}
