@@ -7,6 +7,8 @@
         <!-- <link rel="stylesheet" href="/stylesheets/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="> -->
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
         <!-- <script src="/javascripts/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="></script> -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen/dist/Control.FullScreen.css" />
+        <script src="https://unpkg.com/leaflet.fullscreen/dist/Control.FullScreen.umd.js"></script>
         <style>
             #map {
                 width: calc(100vw - 200px);
@@ -18,13 +20,13 @@
         <h1>Southeast Queensland Public Transport Map</h1>
         <div id="map"></div>
         <script>
+            // Center map on Brisbane CBD.
+            const map = L.map('map').setView([-27.471018236059493, 153.0260892175199], 13);
+            const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
             (async () => {
-                // Center map on Brisbane CBD.
-                const map = L.map('map').setView([-27.471018236059493, 153.0260892175199], 13);
-                const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                }).addTo(map);
                 // Draw all route lines
                 const routesRequest = new Request(`/data/routes`, { method: 'GET' });
                 const routesResponse = await fetch(routesRequest);
@@ -34,12 +36,80 @@
                 var routeData = undefined;
                 var routesDict = {};
                 var routeLayers = {};
-                const nonsenseRoutes = ['BDBN', 'BDBR', 'BRBD', 'BRBR', 'BNBD', 'BNBN', 'BNBR', 'BRBN', 'CABR', 'CAIP', 'CARW', 'CASP', 'VLDB', 'VLBR', 'VLBN']
+                const nonsenseRoutes = [
+                    'BDBN',
+                    // 'BDBR', // Airport - Brisbane City
+                    'BDVL',
+                    'BNBD',
+                    'BNBN',
+                    'BNBR',
+                    'BNFG',
+                    'BNSH',
+                    // 'BNVL', // Beenleigh - Varsity Lakes (Gold Coast)
+                    'BRBD',
+                    // 'BRBN', // Brisbane City - Beenleigh
+                    'BRBR',
+                    // 'BRCA', // Brisbane City - Caboolture
+                    // 'BRCL', // Brisbane City - Cleveland
+                    // 'BRDB', // Brisbane City - Doomben
+                    // 'BRFG', // Brisbane City - Ferny Grove
+                    // 'BRGY', // Brisbane City - Gympie North
+                    // 'BRIP', // Brisbane City - Ipswich
+                    // 'BRNA', // Brisbane City - Nambour
+                    // 'BRRP', // Brisbane City - Redcliffe Peninsula
+                    'BRRW',
+                    // 'BRSH', // Brisbane City - Shorncliffe
+                    // 'BRSP', // Brisbane City - Springfield
+                    'BRVL',
+                    'CABR',
+                    'CAIP',
+                    'CARW',
+                    'CASP',
+                    'CLBR',
+                    'CLDB',
+                    'CLSH',
+                    'DBBN',
+                    'DBBR',
+                    'DBCL',
+                    'FGBN',
+                    'FGBR',
+                    'FGIP',
+                    'GYBR',
+                    'IPBR',
+                    'IPCA',
+                    'IPNA',
+                    'IPRP',
+                    // 'IPRW', // Ipswich - Rosewood
+                    'NABR',
+                    'NAIP',
+                    'NASP',
+                    'RPBR',
+                    'RPIP',
+                    'RPSP',
+                    'RWBR',
+                    'RWCA',
+                    'RWIP',
+                    'RWNA',
+                    'RWRP',
+                    'SHBN',
+                    'SHBR',
+                    'SHCL',
+                    'SHSP',
+                    'SPBR',
+                    'SPCA',
+                    'SPNA',
+                    'SPRP',
+                    'VLBD',
+                    'VLBN',
+                    'VLBR',
+                    'VLDB'
+                ]
                 for (const route of routesRaw) {
                     let routeShortName = route.route_short_name;
                     if (routesDict.hasOwnProperty(routeShortName)) { continue; }
                     if (nonsenseRoutes.includes(routeShortName)) { continue; }
                     if (routeShortName.startsWith('R')) { continue; } // no rail buses
+                    if (routeShortName.startsWith('N')) { continue; } // no nightlink (they duplicate the daytime anyway)
                     routesDict[routeShortName] = route;
                 }
                 const routes = L.layerGroup();
@@ -62,6 +132,42 @@
                         }
                     }
                     routeData.features = routeData.features.filter(feature => feature.geometry.type !== "Point");
+                    let routeType = `Unknown Type ${route.route_type}`;
+                    switch (route.route_type) {
+                        case 0:
+                            routeType = "Tram";
+                            break;
+                        case 1:
+                            routeType = "Subway";
+                            break;
+                        case 2:
+                            routeType = "Train";
+                            break;
+                        case 3:
+                            routeType = "Bus";
+                            break;
+                        case 4:
+                            routeType = "Ferry";
+                            break;
+                        case 5:
+                            routeType = "Cable Tram";
+                            break;
+                        case 6:
+                            routeType = "Cable Car";
+                            break;
+                        case 7:
+                            routeType = "Funicular";
+                            break;
+                        case 11:
+                            routeType = "Trolleybus";
+                            break;
+                        case 12:
+                            routeType = "Monorail";
+                            break;
+                    }
+                    if (route.route_short_name.startsWith("M")) { // Metro-not-a-metro
+                        routeType = "<a href=\"https://www.reddit.com/r/brisbane/comments/vr604q/comment/iet8kw6\">Metro-not-a-metro</a><!-- -definitely-an-Accordion --> Bus"
+                    }
                     routeLayers[route.route_short_name] = L.geoJSON(routeData, {
                         style: function (feature) {
                             return {
@@ -69,7 +175,7 @@
                                 weight: 3
                             };
                         }
-                    }).bindPopup(`<b><span style="background-color: #${route.route_color}; color: #${route.route_text_color}">Route ${route.route_short_name}</span></b><br>${route.route_long_name}`)
+                    }).bindPopup(`<b>${routeType} Route <a href="${route.route_url}"><span style="background-color: #${route.route_color}; color: #${route.route_text_color}">${route.route_short_name}</span></a></b><br>${route.route_long_name}`)
                         .addTo(routes);
                 }
                 // Draw all stops
@@ -89,10 +195,20 @@
                     "Stops": stops
                 };
                 L.control.layers(null, overlayMaps).addTo(map);
-                routes.show();
+                routes.addTo(map);  // make routes visible by default
             })();
+            // Activate fullscreen
+            map.addControl(new L.Control.FullScreen());
+
+            // Display user location
+            const urlParams = new URLSearchParams(window.location.search);
+            const lat = urlParams.get('lat');
+            const lon = urlParams.get('lon');
+            if (lat && lon)
+                L.marker([lat, lon], { title: "You are here!" }).addTo(map).bindPopup("You are here!").openPopup();
         </script>
         <p>Made by <a href="https://twitter.com/aytimothy">aytimothy</a></p>
+        <p>Append <code>?lat=&lt;latitude&gt;&and;lon=&lt;longitude&gt;</code> to pin your location. (You can look it up Google Maps, self-acqusition not implemented yet)</p>
         <div style="height: 100px; display: block;"><!-- Padding --></div>
         <h1>Data Sources</h1>
         <p>
