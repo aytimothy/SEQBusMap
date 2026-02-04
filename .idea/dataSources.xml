@@ -2,7 +2,7 @@
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
     <data-source source="LOCAL" name="SEQ_GTFS" uuid="17c0ac60-f9bc-47e2-ae9a-6ec2c48cf25e">
-      <driver-ref>sqlite.xerial</driver-ref>
+      <driver-ref>43bd30e3-6865-4186-bca4-ee2f26e3a1bd</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
       <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/public/datasets/SEQ_GTFS/SEQ_GTFS.sqlite</jdbc-url>
