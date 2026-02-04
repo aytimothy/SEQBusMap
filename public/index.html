@@ -26,6 +26,17 @@
                 maxZoom: 19,
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             }).addTo(map);
+
+            // Assign them to layer groups
+            const routes = L.layerGroup();
+            const stops = L.layerGroup();
+            const overlayMaps = {
+                "Routes": routes,
+                "Stops": stops
+            };
+            L.control.layers(null, overlayMaps).addTo(map);
+            routes.addTo(map);  // make routes visible by default
+
             (async () => {
                 // Draw all route lines
                 const routesRequest = new Request(`/data/routes`, { method: 'GET' });
@@ -112,7 +123,6 @@
                     if (routeShortName.startsWith('N')) { continue; } // no nightlink (they duplicate the daytime anyway)
                     routesDict[routeShortName] = route;
                 }
-                const routes = L.layerGroup();
                 const routesArray = Object.keys(routesDict).map(key => routesDict[key]);
                 for (const route of routesArray) {
                     try {
@@ -182,20 +192,12 @@
                 const stopsRequest = new Request(`/data/stops`, { method: 'GET' });
                 const stopsResponse = await fetch(stopsRequest);
                 const stopsRaw = await stopsResponse.json();
-                const stops = L.layerGroup();
                 var stopLayers = {};
                 for (const stop of stopsRaw) {
                     stopLayers[stop.stop_id] = L.marker([stop.stop_lat, stop.stop_lon])
                         .bindPopup(`<b>Stop ID:</b> ${stop.stop_id} (<a href="${stop.stop_url}">${stop.stop_code}</a>)<br>${stop.stop_name}</b>`)
                         .addTo(stops);
                 }
-                // Assign them to layer groups
-                const overlayMaps = {
-                    "Routes": routes,
-                    "Stops": stops
-                };
-                L.control.layers(null, overlayMaps).addTo(map);
-                routes.addTo(map);  // make routes visible by default
             })();
             // Activate fullscreen
             map.addControl(new L.Control.FullScreen());
