@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 const sqlite3 = require('sqlite3');
 const { open } = require('sqlite');
+const {exists} = require("node:fs");
 
 /* GET home page. */
 router.get('/', async function(req, res, next) {
@@ -15,7 +16,10 @@ router.get('/:table', async function(req, res, next) {
         await db.close();
     }
     catch (err) {
-        res.status(500).send('Error retrieving data from table \'' + req.params.table + '\': ' + err.message);
+        if (exists('./public/datasets/SEQ_GTFS/SEQ_GTFS.sqlite'))
+            res.status(404).send('Did you forget to generate the SQLite database? Run <code>node run.js</code> or <code>run.bat</code> in the root directory.')
+        else
+            res.status(500).send('Error retrieving data from table \'' + req.params.table + '\': ' + err.message);
     }
 });
 

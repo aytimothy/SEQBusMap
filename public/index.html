@@ -38,6 +38,18 @@
             routes.addTo(map);  // make routes visible by default
 
             (async () => {
+                // Draw all stops
+                const stopsRequest = new Request(`/data/stops`, { method: 'GET' });
+                const stopsResponse = await fetch(stopsRequest);
+                const stopsRaw = await stopsResponse.json();
+                var stopLayers = {};
+                for (const stop of stopsRaw) {
+                    stopLayers[stop.stop_id] = L.marker([stop.stop_lat, stop.stop_lon])
+                        .bindPopup(`<b>Stop ID:</b> ${stop.stop_id} (<a href="${stop.stop_url}">${stop.stop_code}</a>)<br>${stop.stop_name}</b>`)
+                        .addTo(stops);
+                }
+            })();
+            (async () => {
                 // Draw all route lines
                 const routesRequest = new Request(`/data/routes`, { method: 'GET' });
                 const routesResponse = await fetch(routesRequest);
@@ -50,12 +62,7 @@
                 const nonsenseRoutes = [
                     'BDBN',
                     // 'BDBR', // Airport - Brisbane City
-                    'BDVL',
-                    'BNBD',
-                    'BNBN',
-                    'BNBR',
-                    'BNFG',
-                    'BNSH',
+                    'BDVL', 'BNBD', 'BNBN', 'BNBR', 'BNFG', 'BNSH',
                     // 'BNVL', // Beenleigh - Varsity Lakes (Gold Coast)
                     'BRBD',
                     // 'BRBN', // Brisbane City - Beenleigh
@@ -71,49 +78,9 @@
                     'BRRW',
                     // 'BRSH', // Brisbane City - Shorncliffe
                     // 'BRSP', // Brisbane City - Springfield
-                    'BRVL',
-                    'CABR',
-                    'CAIP',
-                    'CARW',
-                    'CASP',
-                    'CLBR',
-                    'CLDB',
-                    'CLSH',
-                    'DBBN',
-                    'DBBR',
-                    'DBCL',
-                    'FGBN',
-                    'FGBR',
-                    'FGIP',
-                    'GYBR',
-                    'IPBR',
-                    'IPCA',
-                    'IPNA',
-                    'IPRP',
+                    'BRVL', 'CABR', 'CAIP', 'CARW', 'CASP', 'CLBR', 'CLDB', 'CLSH', 'DBBN', 'DBBR', 'DBCL', 'FGBN', 'FGBR', 'FGIP', 'GYBR', 'IPBR', 'IPCA', 'IPNA', 'IPRP',
                     // 'IPRW', // Ipswich - Rosewood
-                    'NABR',
-                    'NAIP',
-                    'NASP',
-                    'RPBR',
-                    'RPIP',
-                    'RPSP',
-                    'RWBR',
-                    'RWCA',
-                    'RWIP',
-                    'RWNA',
-                    'RWRP',
-                    'SHBN',
-                    'SHBR',
-                    'SHCL',
-                    'SHSP',
-                    'SPBR',
-                    'SPCA',
-                    'SPNA',
-                    'SPRP',
-                    'VLBD',
-                    'VLBN',
-                    'VLBR',
-                    'VLDB'
+                    'NABR', 'NAIP', 'NASP', 'RPBR', 'RPIP', 'RPSP', 'RWBR', 'RWCA', 'RWIP', 'RWNA', 'RWRP', 'SHBN', 'SHBR', 'SHCL', 'SHSP', 'SPBR', 'SPCA', 'SPNA', 'SPRP', 'VLBD', 'VLBN', 'VLBR', 'VLDB'
                 ]
                 for (const route of routesRaw) {
                     let routeShortName = route.route_short_name;
@@ -187,16 +154,6 @@
                         }
                     }).bindPopup(`<b>${routeType} Route <a href="${route.route_url}"><span style="background-color: #${route.route_color}; color: #${route.route_text_color}">${route.route_short_name}</span></a></b><br>${route.route_long_name}`)
                         .addTo(routes);
-                }
-                // Draw all stops
-                const stopsRequest = new Request(`/data/stops`, { method: 'GET' });
-                const stopsResponse = await fetch(stopsRequest);
-                const stopsRaw = await stopsResponse.json();
-                var stopLayers = {};
-                for (const stop of stopsRaw) {
-                    stopLayers[stop.stop_id] = L.marker([stop.stop_lat, stop.stop_lon])
-                        .bindPopup(`<b>Stop ID:</b> ${stop.stop_id} (<a href="${stop.stop_url}">${stop.stop_code}</a>)<br>${stop.stop_name}</b>`)
-                        .addTo(stops);
                 }
             })();
             // Activate fullscreen
