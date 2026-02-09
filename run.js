@@ -115,6 +115,8 @@ async function getAllRoutesFromGeoJson(sqliteDir) {
         const SRC_GEOJSON = path.join(TARGET_DIR, 'geojson');
         const DEST_GEOJSON = path.join(process.cwd(), 'public/datasets/SEQ_GTFS/geojson');
         await moveDirContents(SRC_GEOJSON, DEST_GEOJSON);
+
+
     } catch (err) {
         console.error('GeoJSON generation error:', err);
     }

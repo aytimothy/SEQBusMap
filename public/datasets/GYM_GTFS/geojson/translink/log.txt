@@ -1,0 +1,8 @@
+Feed Version: Unknown
+GTFS-to-geoJSON Version: 3.8.5
+Date Generated: Mon Feb 09 2026 10:10:58 GMT+1000 (Australian Eastern Standard Time)
+Route Count: 11
+Shape Count: 0
+GeoJSON File Count: 16
+Output Type: route
+Source: https://gtfsrt.api.translink.com.au/GTFS/GYM_GTFS.zip

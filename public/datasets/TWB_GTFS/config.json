@@ -1,0 +1,12 @@
+{
+  "agencies": [
+    {
+      "agencyKey": "translink",
+      "url": "https://gtfsrt.api.translink.com.au/GTFS/TWB_GTFS.zip",
+      "path": "./public/datasets/TWB_GTFS/TWB_GTFS.zip"
+    }
+  ],
+  "outputType": "route",
+  "outputFormat": "lines-and-stops",
+  "sqlitePath": "./public/datasets/TWB_GTFS/TWB_GTFS.sqlite"
+}

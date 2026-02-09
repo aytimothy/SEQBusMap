@@ -1,0 +1,12 @@
+{
+  "agencies": [
+    {
+      "agencyKey": "translink",
+      "url": "https://gtfsrt.api.translink.com.au/GTFS/GYM_GTFS.zip",
+      "path": "./public/datasets/GYM_GTFS/GYM_GTFS.zip"
+    }
+  ],
+  "outputType": "route",
+  "outputFormat": "lines-and-stops",
+  "sqlitePath": "./public/datasets/GYM_GTFS/GYM_GTFS.sqlite"
+}

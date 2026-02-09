@@ -37,21 +37,28 @@
             L.control.layers(null, overlayMaps).addTo(map);
             routes.addTo(map);  // make routes visible by default
 
-            (async () => {
+            const regions = ['SEQ', 'TWB', 'GYM']; // South East Queensland, Toowoomba, Gympie
+            const regionNames = {
+                'SEQ': 'South East Queensland',
+                'TWB': 'Toowoomba',
+                'GYM': 'Gympie'
+            };
+
+            async function DrawStops(region) {
                 // Draw all stops
-                const stopsRequest = new Request(`/data/stops`, { method: 'GET' });
+                const stopsRequest = new Request(`/data/${region}/stops`, { method: 'GET' });
                 const stopsResponse = await fetch(stopsRequest);
                 const stopsRaw = await stopsResponse.json();
                 var stopLayers = {};
                 for (const stop of stopsRaw) {
                     stopLayers[stop.stop_id] = L.marker([stop.stop_lat, stop.stop_lon])
-                        .bindPopup(`<b>Stop ID:</b> ${stop.stop_id} (<a href="${stop.stop_url}">${stop.stop_code}</a>)<br>${stop.stop_name}</b>`)
+                        .bindPopup(`<b>Stop ID:</b> ${stop.stop_id} (<a href="${stop.stop_url}">${stop.stop_code}</a>)<br>${stop.stop_name}</b><br><b>Region:</b> ${regionNames[region]}`)
                         .addTo(stops);
                 }
-            })();
-            (async () => {
+            }
+            async function DrawRoutes(region) {
                 // Draw all route lines
-                const routesRequest = new Request(`/data/routes`, { method: 'GET' });
+                const routesRequest = new Request(`/data/${region}/routes`, { method: 'GET' });
                 const routesResponse = await fetch(routesRequest);
                 const routesRaw = await routesResponse.json();
                 var routeDataRequest = undefined;
@@ -59,47 +66,54 @@
                 var routeData = undefined;
                 var routesDict = {};
                 var routeLayers = {};
-                const nonsenseRoutes = [
-                    'BDBN',
-                    // 'BDBR', // Airport - Brisbane City
-                    'BDVL', 'BNBD', 'BNBN', 'BNBR', 'BNFG', 'BNSH',
-                    // 'BNVL', // Beenleigh - Varsity Lakes (Gold Coast)
-                    'BRBD',
-                    // 'BRBN', // Brisbane City - Beenleigh
-                    'BRBR',
-                    // 'BRCA', // Brisbane City - Caboolture
-                    // 'BRCL', // Brisbane City - Cleveland
-                    // 'BRDB', // Brisbane City - Doomben
-                    // 'BRFG', // Brisbane City - Ferny Grove
-                    // 'BRGY', // Brisbane City - Gympie North
-                    // 'BRIP', // Brisbane City - Ipswich
-                    // 'BRNA', // Brisbane City - Nambour
-                    // 'BRRP', // Brisbane City - Redcliffe Peninsula
-                    'BRRW',
-                    // 'BRSH', // Brisbane City - Shorncliffe
-                    // 'BRSP', // Brisbane City - Springfield
-                    'BRVL', 'CABR', 'CAIP', 'CARW', 'CASP', 'CLBR', 'CLDB', 'CLSH', 'DBBN', 'DBBR', 'DBCL', 'FGBN', 'FGBR', 'FGIP', 'GYBR', 'IPBR', 'IPCA', 'IPNA', 'IPRP',
-                    // 'IPRW', // Ipswich - Rosewood
-                    'NABR', 'NAIP', 'NASP', 'RPBR', 'RPIP', 'RPSP', 'RWBR', 'RWCA', 'RWIP', 'RWNA', 'RWRP', 'SHBN', 'SHBR', 'SHCL', 'SHSP', 'SPBR', 'SPCA', 'SPNA', 'SPRP', 'VLBD', 'VLBN', 'VLBR', 'VLDB'
-                ]
-                for (const route of routesRaw) {
-                    let routeShortName = route.route_short_name;
-                    if (routesDict.hasOwnProperty(routeShortName)) { continue; }
-                    if (nonsenseRoutes.includes(routeShortName)) { continue; }
-                    if (routeShortName.startsWith('R')) { continue; } // no rail buses
-                    if (routeShortName.startsWith('N')) { continue; } // no nightlink (they duplicate the daytime anyway)
-                    routesDict[routeShortName] = route;
+                if (region === 'SEQ') {
+                    const nonsenseRoutes = [
+                        'BDBN',
+                        // 'BDBR', // Airport - Brisbane City
+                        'BDVL', 'BNBD', 'BNBN', 'BNBR', 'BNFG', 'BNSH',
+                        // 'BNVL', // Beenleigh - Varsity Lakes (Gold Coast)
+                        'BRBD',
+                        // 'BRBN', // Brisbane City - Beenleigh
+                        'BRBR',
+                        // 'BRCA', // Brisbane City - Caboolture
+                        // 'BRCL', // Brisbane City - Cleveland
+                        // 'BRDB', // Brisbane City - Doomben
+                        // 'BRFG', // Brisbane City - Ferny Grove
+                        // 'BRGY', // Brisbane City - Gympie North
+                        // 'BRIP', // Brisbane City - Ipswich
+                        // 'BRNA', // Brisbane City - Nambour
+                        // 'BRRP', // Brisbane City - Redcliffe Peninsula
+                        'BRRW',
+                        // 'BRSH', // Brisbane City - Shorncliffe
+                        // 'BRSP', // Brisbane City - Springfield
+                        'BRVL', 'CABR', 'CAIP', 'CARW', 'CASP', 'CLBR', 'CLDB', 'CLSH', 'DBBN', 'DBBR', 'DBCL', 'FGBN', 'FGBR', 'FGIP', 'GYBR', 'IPBR', 'IPCA', 'IPNA', 'IPRP',
+                        // 'IPRW', // Ipswich - Rosewood
+                        'NABR', 'NAIP', 'NASP', 'RPBR', 'RPIP', 'RPSP', 'RWBR', 'RWCA', 'RWIP', 'RWNA', 'RWRP', 'SHBN', 'SHBR', 'SHCL', 'SHSP', 'SPBR', 'SPCA', 'SPNA', 'SPRP', 'VLBD', 'VLBN', 'VLBR', 'VLDB'
+                    ]
+                    for (const route of routesRaw) {
+                        let routeShortName = route.route_short_name;
+                        if (routesDict.hasOwnProperty(routeShortName)) { continue; }
+                        if (nonsenseRoutes.includes(routeShortName)) { continue; }
+                        if (routeShortName.startsWith('R')) { continue; } // no rail buses
+                        if (routeShortName.startsWith('N')) { continue; } // no nightlink (they duplicate the daytime anyway)
+                        routesDict[routeShortName] = route;
+                    }
+                }
+                else {
+                    for (const route of routesRaw) {
+                        routesDict[route.route_short_name] = route;
+                    }
                 }
                 const routesArray = Object.keys(routesDict).map(key => routesDict[key]);
                 for (const route of routesArray) {
                     try {
-                        routeDataRequest = new Request(`/datasets/SEQ_GTFS/geojson/translink/${route.route_id}_0.geojson`, { method: 'GET' });
+                        routeDataRequest = new Request(`/datasets/${region}_GTFS/geojson/translink/${route.route_id}_0.geojson`, { method: 'GET' });
                         routeDataResponse = await fetch(routeDataRequest);
                         routeData = await routeDataResponse.json();
                     }
                     catch (err) {
                         try {
-                            routeDataRequest = new Request(`/datasets/SEQ_GTFS/geojson/translink/${route.route_id}_1.geojson`, { method: 'GET' });
+                            routeDataRequest = new Request(`/datasets/${region}_GTFS/geojson/translink/${route.route_id}_1.geojson`, { method: 'GET' });
                             routeDataResponse = await fetch(routeDataRequest);
                             routeData = await routeDataResponse.json();
                         }
@@ -142,7 +156,7 @@
                             routeType = "Monorail";
                             break;
                     }
-                    if (route.route_short_name.startsWith("M")) { // Metro-not-a-metro
+                    if (route.route_short_name.startsWith("M") && region === 'seq') { // Metro-not-a-metro
                         routeType = "<a href=\"https://www.reddit.com/r/brisbane/comments/vr604q/comment/iet8kw6\">Metro-not-a-metro</a><!-- -definitely-an-Accordion --> Bus"
                     }
                     routeLayers[route.route_short_name] = L.geoJSON(routeData, {
@@ -152,10 +166,16 @@
                                 weight: 3
                             };
                         }
-                    }).bindPopup(`<b>${routeType} Route <a href="${route.route_url}"><span style="background-color: #${route.route_color}; color: #${route.route_text_color}">${route.route_short_name}</span></a></b><br>${route.route_long_name}`)
+                    }).bindPopup(`<b>${region} ${routeType} Route <a href="${route.route_url}"><span style="background-color: #${route.route_color}; color: #${route.route_text_color}">${route.route_short_name}</span></a></b><br>${route.route_long_name}`)
                         .addTo(routes);
                 }
-            })();
+            }
+
+            regions.forEach(region => {
+                DrawStops(region);
+                DrawRoutes(region);
+            })
+
             // Activate fullscreen
             map.addControl(new L.Control.FullScreen());
 
@@ -176,6 +196,10 @@
         </p>
         <ul>
             <li><a href="https://www.data.qld.gov.au/dataset/general-transit-feed-specification-gtfs-translink/resource/e43b6b9f-fc2b-4630-a7c9-86dd5483552b">South East Queensland (SEQ) - general transit feed specification</a> <a href="https://gtfsrt.api.translink.com.au/GTFS/SEQ_GTFS.zip">(Direct)</a> <a href="https://gtfs.org/documentation/schedule/reference/">(Specs)</a></li>
+            <ul>
+                <li>And <a href="https://www.data.qld.gov.au/dataset/general-transit-feed-specification-gtfs-translink/resource/48501fd9-148b-4b96-a9fa-b412d768048c">Toowoomba</a></li>
+                <li>And <a href="https://www.data.qld.gov.au/dataset/general-transit-feed-specification-gtfs-translink/resource/e0366e86-298d-49e5-adbd-7be68c9e4b44">Gympie</a></li>
+            </ul>
             <li><a href="https://openstreetmap.org">OpenStreetMap</a></li>
         </ul>
     </body>
